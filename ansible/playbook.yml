@@ -1,0 +1,47 @@
+- name: Deploy webservers
+  hosts: all
+  remote_user: root
+  vars:
+    pip_package: python3-pip
+    pip_install_packages:
+      - name: docker
+  tasks:
+    - name: update packages cache
+      apt:
+        update_cache: yes
+
+    - name: Install pip and packages
+      include_role:
+        name: geerlingguy.pip
+
+    - name: create environment variables from template
+      template:
+        src: environment.j2
+        dest: '.env'
+
+    - name: run container
+      community.docker.docker_container:
+        name: redmine-app
+        image: redmine
+        published_ports: 3000:3000
+        restart_policy: always
+        restart: yes
+        container_default_behavior: no_defaults
+        pull: yes
+        env_file: .env
+
+- name: Setting up Datadog agent
+  hosts: all
+  remote_user: root
+  vars:
+    datadog_site: "datadoghq.com"
+    datadog_checks:
+      http_check:
+        init_config:
+        instances:
+          - name: devops_lvl3_project_status
+            url: http://localhost:3000
+            timeout: 5
+            method: GET
+  roles:
+    - role: datadog.datadog
