@@ -2,9 +2,11 @@ resource "digitalocean_loadbalancer" "loadbalancer" {
   name   = "${var.project_name}-loadbalancer"
   region = "ams3"
 
+  # redirect_http_to_https = true
   sticky_sessions {
     type               = "cookies"
     cookie_name        = "lb"
+    cookie_ttl_seconds = 120
   }
 
   dynamic "forwarding_rule" {
@@ -27,7 +29,7 @@ resource "digitalocean_loadbalancer" "loadbalancer" {
       target_port     = 3000
       target_protocol = "http"
 
-      certificate_id = digitalocean_certificate.certificate.id
+      certificate_id = digitalocean_certificate.cert.id
     }
   }
 
